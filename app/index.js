@@ -1,10 +1,14 @@
 const express = require('express');
 const Blockchain = require('../Blockchain');
 const bodyParser = require('body-parser');
+const P2pServer = require('./p2p-server');
+
+const HTTP_PORT = process.env.HTTP_PORT || 3001;
 
 const app = express();
 const bc = new Blockchain();
-const HTTP_PORT = process.env.HTTP_PORT || 3001;
+const p2pServer = new P2pServer(bc);
+
 
 app.use(bodyParser.json());
 
@@ -15,7 +19,9 @@ app.get('/blocks', (req,res) => {
 app.post('/mine', (req, res) => {
     const block = bc.addBlock(req.body.data);
     console.log(`New block has been added ${block.toString()}`);
+    p2pServer.syncChain();
     res.redirect('/blocks');
 });
 
 app.listen(HTTP_PORT, () => console.log(`Server running at ${HTTP_PORT}`));
+p2pServer.listen();
